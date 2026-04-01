@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="300">
+<title>Agent Brain - Autonomous Portfolio</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0a0a1a;
+  --card: #1a1a2e;
+  --card-border: #2a2a4e;
+  --text: #e0e0e0;
+  --text-dim: #888;
+  --accent-green: #00ff88;
+  --accent-yellow: #ffaa00;
+  --accent-red: #ff4444;
+  --accent-blue: #4488ff;
+  --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* === HEADER === */
+.header {
+  background: linear-gradient(135deg, #0d0d24 0%, #1a1a2e 100%);
+  border-bottom: 1px solid var(--card-border);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.header-title span { color: var(--accent-green); }
+.regime-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.header-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.hstat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hstat-label { color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.hstat-value { font-size: 14px; font-weight: 600; }
+.confidence-bar {
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.confidence-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* === SECTION === */
+.section {
+  padding: 16px 20px;
+}
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title .st-icon {
+  font-size: 16px;
+}
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--card-border);
+  margin: 0;
+}
+
+/* === GRID === */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1100px) {
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* === TIMELINE === */
+.timeline-entry {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+}
+.te-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.te-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+.te-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.te-details {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.te-kd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.kd-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: #2a2a4e;
+  color: var(--text-dim);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+/* === SCORE CARDS === */
+.score-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.sc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.sc-ticker {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+.sc-total {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+}
+.sc-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+.factor-details {
+  margin-top: 8px;
+}
+.fd-row {
+  font-size: 11px;
+  margin-bottom: 3px;
+  display: flex;
+  gap: 6px;
+}
+.fd-label {
+  font-family: var(--mono);
+  color: var(--accent-blue);
+  white-space: nowrap;
+  min-width: 70px;
+}
+.fd-detail {
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* === FLOW CARDS === */
+.flow-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.fc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.fc-ticker {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+.fc-dir {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+.fc-prem, .fc-score {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.fc-detail {
+  font-size: 11px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.fc-action {
+  font-size: 11px;
+}
+
+/* === TRIGGER ROWS === */
+.trigger-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #1a1a2e;
+  font-family: var(--mono);
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.tr-name { color: var(--text); min-width: 140px; }
+.tr-level { color: var(--text-dim); flex: 1; min-width: 160px; }
+.tr-status { font-weight: 600; }
+
+/* === DECISION LOG === */
+.decision-entry {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: var(--card);
+  border-radius: 6px;
+}
+.de-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.de-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.de-ticker {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+.de-date {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.de-score {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.de-reason {
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* === OPTIONS === */
+.opt-trade-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.ot-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.ot-type {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.ot-ticker {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+}
+.ot-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.ot-stats {
+  display: flex;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent-blue);
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.ot-thesis {
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* === REGIME === */
+.regime-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.regime-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  border-bottom: 1px solid #1a1a2e;
+}
+.regime-row:last-child { border-bottom: none; }
+.rr-label { color: var(--text-dim); }
+.rr-value { font-weight: 600; }
+
+/* === WATCHLIST === */
+.watch-entry {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.we-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.we-ticker {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+.we-score {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+.we-sector {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.we-strengths { font-size: 12px; color: var(--text); margin-bottom: 2px; }
+.we-blocker { font-size: 11px; }
+.we-next { font-size: 11px; }
+
+/* === MISTAKES & LESSONS === */
+.mistake-entry, .lesson-entry, .lesson-pattern {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.mi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.mi-date {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.mi-status {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+.mi-what { font-size: 12px; color: var(--text); margin-bottom: 4px; }
+.mi-fix { font-size: 11px; color: var(--text-dim); }
+.lesson-pattern {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.lp-name { color: var(--text); flex: 1; min-width: 200px; }
+.lp-count { font-family: var(--mono); color: var(--accent-yellow); }
+.lp-action { color: var(--text-dim); font-size: 11px; }
+.lesson-entry {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.le-ticker {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent-blue);
+  min-width: 50px;
+}
+.le-text { font-size: 12px; color: var(--text); }
+
+/* === OVERNIGHT === */
+.overnight-concern {
+  background: var(--card);
+  border-left: 3px solid var(--accent-yellow);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.oc-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-yellow);
+  display: block;
+  margin-bottom: 2px;
+}
+.oc-detail { font-size: 12px; color: var(--text-dim); }
+
+/* === EMPTY STATE === */
+.empty-state {
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 20px;
+  text-align: center;
+}
+
+/* === BUDGET CHART CONTAINER === */
+.chart-container {
+  max-width: 200px;
+  margin: 10px auto;
+}
+.spread-chart-container {
+  max-width: 100%;
+  height: 120px;
+  margin-top: 10px;
+}
+
+/* === CANVAS FIX === */
+canvas {
+  max-width: 100%;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-title"><span>&#9670;</span> AGENT BRAIN <span style="color:var(--text-dim);font-size:12px;font-weight:400;">Autonomous Portfolio Intelligence</span></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <span class="regime-badge" style="background:#ffaa00;color:#0a0a1a;">WATCH</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">Updated 2026-04-01 ~3:55 PM ET (pre-close-check EOD FINAL)</span>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat">
+      <span class="hstat-label">Portfolio</span>
+      <span class="hstat-value" style="color:#ff4444;">$988.90 (-1.11%)</span>
+    </div>
+    <div class="hstat">
+      <span class="hstat-label">SPY</span>
+      <span class="hstat-value" style="color:#00ff88;">+0.87%</span>
+    </div>
+    <div class="hstat">
+      <span class="hstat-label">Alpha</span>
+      <span class="hstat-value" style="color:#ff4444;">-1.98%</span>
+    </div>
+    <div class="hstat">
+      <span class="hstat-label">Cash</span>
+      <span class="hstat-value">$219.53 (22.2%)</span>
+    </div>
+    <div class="hstat">
+      <span class="hstat-label">Positions</span>
+      <span class="hstat-value">6E + 1O</span>
+    </div>
+    <div class="hstat">
+      <span class="hstat-label">Next Action</span>
+      <span class="hstat-value" style="color:var(--accent-yellow);">Daily Monitor Apr 2 1PM PST</span>
+    </div>
+  </div>
+  <div class="confidence-bar" title="Agent Confidence: 53%">
+    <div class="confidence-fill" style="width:53%;background:linear-gradient(90deg,var(--accent-green),var(--accent-blue));"></div>
+  </div>
+  <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:3px;">Agent Confidence: 53% (avg score 7.04/10.5, 2/6 above buy threshold)</div>
+</div>
+
+<!-- SECTION: AGENT ACTIVITY TIMELINE -->
+<div class="section">
+  <div class="section-title"><span class="st-icon">&#9202;</span> Agent Activity Timeline</div>
+  <div style="max-height:600px;overflow-y:auto;">
+    
+        <div class="timeline-entry" style="border-left: 3px solid #ffaa00; background: #ffaa0033;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#ffaa00; color:#0a0a1a;">FLAGGED</span>
+            <span class="te-time">3:54 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.71, Portfolio $986.77</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $986.77 (-1.32% inception)</span><span class="kd-chip">SPY $655.14 (+0.74% inception)</span><span class="kd-chip">Alpha -2.06%</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #ff4444; background: #ff444433;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#ff4444; color:#0a0a1a;">ALERT</span>
+            <span class="te-time">3:55 PM ET</span>
+          </div>
+          <div class="te-details">NVDA flow reversal DOWNGRADED to FLOW_WATCH. Full-day data: $43.0M call vs $8.3M put (5.18:1 bullish). Afternoon put spike was broad market hedging, not NVDA-specific.</div>
+          <div class="te-kd"><span class="kd-chip">Alpha -1.98%</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #ff4444; background: #ff444433;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#ff4444; color:#0a0a1a;">ALERT</span>
+            <span class="te-time">3:23 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.735, Portfolio $989.17</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $989.17 (-1.08%)</span><span class="kd-chip">SPY $655.55 (+0.80% inception)</span><span class="kd-chip">Alpha -1.88%</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #ff4444; background: #ff444433;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#ff4444; color:#0a0a1a;">ALERT</span>
+            <span class="te-time">3:30 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.690, Portfolio $984.06</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $984.06 (-1.59%)</span><span class="kd-chip">SPY $654.55 (+0.65% inception)</span><span class="kd-chip">Alpha -2.24%</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #ff4444; background: #ff444433;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#ff4444; color:#0a0a1a;">ALERT</span>
+            <span class="te-time">2:45 PM ET</span>
+          </div>
+          <div class="te-details">NVDA FLOW_REVERSAL detected. $38.5M pure put premium. EOD broad hedging wave (IWM $11.7M, SPY $12.5M simultaneous). First occurrence -- flag only, no exit yet.</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $985.39 (-1.46%)</span><span class="kd-chip">SPY $655.00 (+0.72%)</span><span class="kd-chip">Alpha -2.18%</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">3:00 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.66, Portfolio $981.23</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $981.23 (-1.88%)</span><span class="kd-chip">SPY $654.56 (+0.65% inception)</span><span class="kd-chip">Alpha -2.53%</span><span class="kd-chip">NVDA spread $0.66 (-20.5% from fill, stop $0.415 — 59% above stop, safe)</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">2:30 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.70, Portfolio $988.04</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $988.04 (-1.20%)</span><span class="kd-chip">SPY $656.59 (+0.96%)</span><span class="kd-chip">Alpha -2.16%</span><span class="kd-chip">NVDA spread $0.70 (-15.6%, trending lower but SAFE — stop at $0.415, 41% above stop)</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">2:00 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.73, Portfolio $992.02</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $992.02 (-0.80%)</span><span class="kd-chip">SPY $657.56 (+1.11%)</span><span class="kd-chip">Alpha -1.91%</span><span class="kd-chip">NVDA spread $0.73 (-12.0%, trending lower but SAFE — stop at $0.415, still 76% above stop)</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">1:36 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.76, Portfolio $995.87</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $995.87 (-0.41%)</span><span class="kd-chip">SPY $658.10 (+1.19%)</span><span class="kd-chip">Alpha -1.60%</span><span class="kd-chip">NVDA spread $0.76 (-8.4%, no triggers)</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">MONITOR</span>
+            <span class="te-time">1:07 PM ET</span>
+          </div>
+          <div class="te-details">Full midday monitor. NVDA spread re-verified (flow score 4.5 unchanged). Scanned GOOGL (2.25, below 3.0), TSM (semiconductor overlap -- skip). No new trades.</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $1,000.36 (+0.04%)</span><span class="kd-chip">SPY $658.45 (+1.25%)</span><span class="kd-chip">Alpha -1.21%</span><span class="kd-chip">NVDA spread $0.79 (-4.8%)</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">1:06 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.79, Portfolio $1,000.41</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $1,000.41 (+0.04%)</span><span class="kd-chip">SPY $658.45 (+1.25%)</span><span class="kd-chip">Alpha -1.21%</span><span class="kd-chip">NVDA spread $0.79 (-4.8%, no triggers)</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">12:36 PM ET</span>
+          </div>
+          <div class="te-details">Routine check. NVDA spread $0.81, Portfolio $1,000.54</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $1,000.54 (+0.05%)</span><span class="kd-chip">SPY $657.61 (+1.12%)</span><span class="kd-chip">Alpha -1.07%</span><span class="kd-chip">NVDA spread $0.81 (-2.4%, no triggers)</span><span class="kd-chip">Regime: WATCH</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #00ff88; background: #00ff8833;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#00ff88; color:#0a0a1a;">TRADE EXECUTED</span>
+            <span class="te-time">12:30 PM ET</span>
+          </div>
+          <div class="te-details">NVDA Bull Call Spread $182.50/$185 filled. Flow score 4.5. R:R 1:2.14.</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $1,001.01 (+0.10%)</span><span class="kd-chip">SPY $657.29 (+1.07%)</span><span class="kd-chip">Alpha -0.97%</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #ffaa00; background: #ffaa0033;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#ffaa00; color:#0a0a1a;">FLAGGED</span>
+            <span class="te-time">11:45 AM ET</span>
+          </div>
+          <div class="te-details">Execution blocked -- sandbox disk full. Freed space by truncating old JSONs. NVDA deferred to retry.</div>
+          <div class="te-kd"></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">11:34 AM ET</span>
+          </div>
+          <div class="te-details">Routine check. Portfolio $1,001.30</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $1,001.30 (+0.13%)</span><span class="kd-chip">SPY $656.36 (+0.93%)</span><span class="kd-chip">Alpha -0.80%</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">11:06 AM ET</span>
+          </div>
+          <div class="te-details">Routine check. Portfolio $1,001.47</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $1,001.47 (+0.15%)</span><span class="kd-chip">SPY $656.75 (+0.99%)</span><span class="kd-chip">Alpha -0.84%</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">10:36 AM ET</span>
+          </div>
+          <div class="te-details">Routine check. Portfolio $995.36</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $995.36 (-0.46%)</span><span class="kd-chip">SPY $653.81 (+0.53%)</span><span class="kd-chip">Alpha -1.00%</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #ffaa00; background: #ffaa0033;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#ffaa00; color:#0a0a1a;">FLAGGED</span>
+            <span class="te-time">10:06 AM ET</span>
+          </div>
+          <div class="te-details">All 6 positions API-confirmed. NVDA spec verified for 11:30 execution. MU still conflicted. ADBE put sweep $161K noted.</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $997.97 (-0.20%)</span><span class="kd-chip">SPY $654.29 (+0.61%)</span><span class="kd-chip">Alpha -0.81%</span></div>
+        </div>
+        <div class="timeline-entry" style="border-left: 3px solid #666; background: #33333366;">
+          <div class="te-header">
+            <span class="te-badge" style="background:#666; color:#0a0a1a;">ROUTINE CHECK</span>
+            <span class="te-time">10:04 AM ET</span>
+          </div>
+          <div class="te-details">Routine check. Portfolio $998.33</div>
+          <div class="te-kd"><span class="kd-chip">Portfolio $998.33 (+0.73% from 09:50 check)</span></div>
+        </div>
+  </div>
+</div>
+<hr class="section-divider">
+
+<!-- SECTION: SCORING INTELLIGENCE -->
+<div class="section">
+  <div class="section-title"><span class="st-icon">&#9733;</span> Scoring Intelligence -- 8-Factor Deep Dive</div>
+  <div class="grid-3">
+    
+        <div class="score-card" id="score-card-0">
+          <div class="sc-header">
+            <span class="sc-ticker">ADBE</span>
+            <span class="sc-total" style="color:#44dd66;">7.50</span>
+            <span class="sc-badge" style="background:#44dd66;color:#0a0a1a;">STRONG BUY</span>
+            <span style="color:#ff4444;">&#9660; -0.38</span>
+          </div>
+          <canvas id="radar-0" width="200" height="200"></canvas>
+          <div class="factor-details"><div class="fd-row"><span class="fd-label">F1: 1.25</span> <span class="fd-detail">TTM rev $24.5B vs $22.0B = +11.0% YoY, accelerating</span></div><div class="fd-row"><span class="fd-label">F2: 1.50</span> <span class="fd-detail">GM=89.1%, OM=36.6%</span></div><div class="fd-row"><span class="fd-label">F3: 1.50</span> <span class="fd-detail">FCF $10.32B / MktCap $99B = 10.4% yield</span></div><div class="fd-row"><span class="fd-label">F4: 0.75</span> <span class="fd-detail">P/E=9.2 vs sector 27.5 (discount), EV/EBITDA=10.3</span></div><div class="fd-row"><span class="fd-label">F5: 0.50</span> <span class="fd-detail">D/E=0.58 (debt $6.7B, equity $11.4B, cash $6.3B)</span></div><div class="fd-row"><span class="fd-label">F6: 0.75</span> <span class="fd-detail">Analyst neutral, insider neutral, SMA data limited</span></div><div class="fd-row"><span class="fd-label">F7: 0.75</span> <span class="fd-detail">GM std=0.003 over 8Q (very stable), diversification default</span></div><div class="fd-row"><span class="fd-label">F8: 0.50</span> <span class="fd-detail">Bullish flow convergence — call $12.2M vs put $4.5M, 362 DP prints</span></div></div>
+        </div>
+        <div class="score-card" id="score-card-1">
+          <div class="sc-header">
+            <span class="sc-ticker">CRM</span>
+            <span class="sc-total" style="color:#44dd66;">7.50</span>
+            <span class="sc-badge" style="background:#44dd66;color:#0a0a1a;">STRONG BUY</span>
+            <span style="color:#00ff88;">&#9650; +0.38</span>
+          </div>
+          <canvas id="radar-1" width="200" height="200"></canvas>
+          <div class="factor-details"><div class="fd-row"><span class="fd-label">F1: 0.75</span> <span class="fd-detail">TTM rev $41.5B vs $37.9B = +9.6% YoY, accelerating</span></div><div class="fd-row"><span class="fd-label">F2: 1.50</span> <span class="fd-detail">GM=77.7%, OM=21.5%, expanding (was 77.2%/19.0%)</span></div><div class="fd-row"><span class="fd-label">F3: 1.50</span> <span class="fd-detail">FCF $14.4B / MktCap $175B = 8.2% yield</span></div><div class="fd-row"><span class="fd-label">F4: 0.75</span> <span class="fd-detail">P/E=12.5 vs sector 27.5 (deep discount), EV/EBITDA=14.4</span></div><div class="fd-row"><span class="fd-label">F5: 1.00</span> <span class="fd-detail">D/E=0.29 (debt $17.2B, equity $59.1B, cash $7.3B)</span></div><div class="fd-row"><span class="fd-label">F6: 0.75</span> <span class="fd-detail">Limited data</span></div><div class="fd-row"><span class="fd-label">F7: 0.75</span> <span class="fd-detail">GM std=0.006 over 8Q (stable), diversification default</span></div><div class="fd-row"><span class="fd-label">F8: 0.50</span> <span class="fd-detail">Bullish flow — call $18.7M vs put $8.8M, 500 DP prints</span></div></div>
+        </div>
+        <div class="score-card" id="score-card-2">
+          <div class="sc-header">
+            <span class="sc-ticker">TFC</span>
+            <span class="sc-total" style="color:#ffaa00;">7.25</span>
+            <span class="sc-badge" style="background:#ffaa00;color:#0a0a1a;">HOLD</span>
+            <span style="color:#ff4444;">&#9660; -0.25</span>
+          </div>
+          <canvas id="radar-2" width="200" height="200"></canvas>
+          <div class="factor-details"><div class="fd-row"><span class="fd-label">F1: 1.75</span> <span class="fd-detail">TTM rev $30.4B vs $24.3B = +25.5% YoY, ACCELERATING — best growth in portfolio</span></div><div class="fd-row"><span class="fd-label">F2: 1.50</span> <span class="fd-detail">GM=62.2%, OM=20.9%, massive expansion from 47.0%/-2.5%</span></div><div class="fd-row"><span class="fd-label">F3: 1.50</span> <span class="fd-detail">FCF $5.74B / MktCap $59B = 9.8% yield</span></div><div class="fd-row"><span class="fd-label">F4: 0.75</span> <span class="fd-detail">P/E=9.0 vs sector 14 (discount)</span></div><div class="fd-row"><span class="fd-label">F5: 0.25</span> <span class="fd-detail">D/E=1.07 — bank, naturally levered</span></div><div class="fd-row"><span class="fd-label">F6: 0.75</span> <span class="fd-detail">Limited data</span></div><div class="fd-row"><span class="fd-label">F7: 0.50</span> <span class="fd-detail">GM std=0.037 (moderate variability for a bank)</span></div><div class="fd-row"><span class="fd-label">F8: 0.25</span> <span class="fd-detail">Insufficient flow data</span></div></div>
+        </div>
+        <div class="score-card" id="score-card-3">
+          <div class="sc-header">
+            <span class="sc-ticker">IBKR</span>
+            <span class="sc-total" style="color:#ffaa00;">7.00</span>
+            <span class="sc-badge" style="background:#ffaa00;color:#0a0a1a;">HOLD</span>
+            <span style="color:#ff4444;">&#9660; -0.38</span>
+          </div>
+          <canvas id="radar-3" width="200" height="200"></canvas>
+          <div class="factor-details"><div class="fd-row"><span class="fd-label">F1: 1.50</span> <span class="fd-detail">TTM rev $10.2B vs $8.3B = +23.5% YoY</span></div><div class="fd-row"><span class="fd-label">F2: 1.50</span> <span class="fd-detail">GM=89.8%, OM=86.0% — insanely profitable</span></div><div class="fd-row"><span class="fd-label">F3: 1.50</span> <span class="fd-detail">FCF $15.7B / MktCap $114B = 13.8% yield</span></div><div class="fd-row"><span class="fd-label">F4: 0.00</span> <span class="fd-detail">P/E=24.5 vs sector 14 (1.75x premium — significant overvaluation vs fin sector)</span></div><div class="fd-row"><span class="fd-label">F5: 1.00</span> <span class="fd-detail">Net cash ($5.0B cash, $0 debt)</span></div><div class="fd-row"><span class="fd-label">F6: 0.75</span> <span class="fd-detail">Limited data</span></div><div class="fd-row"><span class="fd-label">F7: 0.25</span> <span class="fd-detail">GM std=0.237 — HIGH variability (brokerage income fluctuates)</span></div><div class="fd-row"><span class="fd-label">F8: 0.50</span> <span class="fd-detail">Bullish flow — call $520K vs put $0</span></div></div>
+        </div>
+        <div class="score-card" id="score-card-4">
+          <div class="sc-header">
+            <span class="sc-ticker">UBER</span>
+            <span class="sc-total" style="color:#ffaa00;">6.50</span>
+            <span class="sc-badge" style="background:#ffaa00;color:#0a0a1a;">HOLD</span>
+            <span style="color:#ff4444;">&#9660; -1.00</span>
+          </div>
+          <canvas id="radar-4" width="200" height="200"></canvas>
+          <div class="factor-details"><div class="fd-row"><span class="fd-label">F1: 1.00</span> <span class="fd-detail">TTM rev $52.0B vs $44.0B = +18.3% YoY</span></div><div class="fd-row"><span class="fd-label">F2: 0.75</span> <span class="fd-detail">GM=39.8%, OM=10.7% — expanding but still low</span></div><div class="fd-row"><span class="fd-label">F3: 1.00</span> <span class="fd-detail">FCF $9.76B / MktCap $148B = 6.6% yield</span></div><div class="fd-row"><span class="fd-label">F4: 0.75</span> <span class="fd-detail">P/E=16.8 vs sector 27.5 (discount), EV/EBITDA=24.4</span></div><div class="fd-row"><span class="fd-label">F5: 1.00</span> <span class="fd-detail">D/E=0.50 (debt $13.5B, equity $27.0B, cash $7.7B)</span></div><div class="fd-row"><span class="fd-label">F6: 0.75</span> <span class="fd-detail">Limited data</span></div><div class="fd-row"><span class="fd-label">F7: 0.75</span> <span class="fd-detail">GM std=0.003 (very stable)</span></div><div class="fd-row"><span class="fd-label">F8: 0.50</span> <span class="fd-detail">Bullish flow — call $4.2M vs put $610K</span></div></div>
+        </div>
+        <div class="score-card" id="score-card-5">
+          <div class="sc-header">
+            <span class="sc-ticker">PYPL</span>
+            <span class="sc-total" style="color:#ffaa00;">6.50</span>
+            <span class="sc-badge" style="background:#ffaa00;color:#0a0a1a;">HOLD</span>
+            <span style="color:#ff4444;">&#9660; -0.62</span>
+          </div>
+          <canvas id="radar-5" width="200" height="200"></canvas>
+          <div class="factor-details"><div class="fd-row"><span class="fd-label">F1: 0.25</span> <span class="fd-detail">TTM rev $33.2B vs $31.8B = +4.3% YoY — weakest growth</span></div><div class="fd-row"><span class="fd-label">F2: 1.25</span> <span class="fd-detail">GM=46.6%, OM=18.3%, expanding</span></div><div class="fd-row"><span class="fd-label">F3: 1.50</span> <span class="fd-detail">FCF $5.56B / MktCap $42B = 13.1% yield — best FCF yield</span></div><div class="fd-row"><span class="fd-label">F4: 0.75</span> <span class="fd-detail">P/E=7.8 vs sector 14 (deep discount), EV/EBITDA=6.5</span></div><div class="fd-row"><span class="fd-label">F5: 1.00</span> <span class="fd-detail">D/E=0.49 (debt $10.0B, equity $20.3B, cash $8.0B)</span></div><div class="fd-row"><span class="fd-label">F6: 0.75</span> <span class="fd-detail">Limited data</span></div><div class="fd-row"><span class="fd-label">F7: 0.75</span> <span class="fd-detail">GM std=0.008 (stable)</span></div><div class="fd-row"><span class="fd-label">F8: 0.25</span> <span class="fd-detail">Insufficient flow data</span></div></div>
+        </div>
+        <div class="score-card" id="score-card-6">
+          <div class="sc-header">
+            <span class="sc-ticker">DELL</span>
+            <span class="sc-total" style="color:#ff6644;">5.50</span>
+            <span class="sc-badge" style="background:#ff6644;color:#0a0a1a;">UNDERWEIGHT</span>
+            <span style="color:#ff4444;">&#9660; -1.75</span>
+          </div>
+          <canvas id="radar-6" width="200" height="200"></canvas>
+          <div class="factor-details"><div class="fd-row"><span class="fd-label">F1: 1.25</span> <span class="fd-detail">TTM rev $113.5B vs $95.4B = +19.0% YoY, accelerating</span></div><div class="fd-row"><span class="fd-label">F2: 0.50</span> <span class="fd-detail">GM=20.1%, OM=7.2% — razor-thin margins</span></div><div class="fd-row"><span class="fd-label">F3: 1.00</span> <span class="fd-detail">FCF $8.55B / MktCap $109B = 7.9% yield</span></div><div class="fd-row"><span class="fd-label">F4: 0.75</span> <span class="fd-detail">P/E=11.3 vs sector 27.5 (discount)</span></div><div class="fd-row"><span class="fd-label">F5: 0.00</span> <span class="fd-detail">NEGATIVE EQUITY (-$2.5B) — this is the killer</span></div><div class="fd-row"><span class="fd-label">F6: 0.75</span> <span class="fd-detail">Limited data</span></div><div class="fd-row"><span class="fd-label">F7: 0.75</span> <span class="fd-detail">GM std=0.014 (stable for hardware)</span></div><div class="fd-row"><span class="fd-label">F8: 0.50</span> <span class="fd-detail">Bullish flow — call $26.0M vs put $3.5M</span></div></div>
+        </div>
+  </div>
+</div>
+<hr class="section-divider">
+
+<!-- SECTION: FLOW INTELLIGENCE -->
+<div class="section">
+  <div class="section-title"><span class="st-icon">&#9889;</span> Flow Intelligence -- Institutional Money Map</div>
+  <div class="grid-2">
+    <div>
+      
+        <div class="flow-card" style="border-left:3px solid #00ff88;">
+          <div class="fc-header">
+            <span class="fc-ticker">ADBE</span>
+            <span class="fc-dir" style="color:#00ff88;">BULLISH</span>
+            <span class="fc-prem">$N/A</span>
+            <span class="fc-score">Score: N/A</span>
+          </div>
+          <div class="fc-detail">Sweeps: 0 | $161K put SWEEP at ask (Apr 17). Small relative to ADBE's market cap. ADBE score 7.50. PM check (2:40 PM ET): 0 flow ale</div>
+          <div class="fc-action" style="color:#888;">THRESHOLD NOT BREACHED. Morning sweep was isolated. Equity position safe. Remove this flag at weekly review if no new pu</div>
+        </div>
+        <div class="flow-card" style="border-left:3px solid #00ff88;">
+          <div class="fc-header">
+            <span class="fc-ticker">SLV</span>
+            <span class="fc-dir" style="color:#00ff88;">BULLISH</span>
+            <span class="fc-prem">$6.7M</span>
+            <span class="fc-score">Score: N/A</span>
+          </div>
+          <div class="fc-detail">Sweeps: 4 | $6.7M call premium, 4 sweeps, 0 puts. Strong bullish flow on silver. Not in our equity universe.</div>
+          <div class="fc-action" style="color:#888;">Monitor at midday.</div>
+        </div>
+        <div class="flow-card" style="border-left:3px solid #00ff88;">
+          <div class="fc-header">
+            <span class="fc-ticker">AMD</span>
+            <span class="fc-dir" style="color:#00ff88;">BULLISH</span>
+            <span class="fc-prem">$2.5M</span>
+            <span class="fc-score">Score: N/A</span>
+          </div>
+          <div class="fc-detail">Sweeps: 0 | $2.5M call premium, 1 sweep. Technology sector.</div>
+          <div class="fc-action" style="color:#888;">Monitored. Not in top flow scan.</div>
+        </div>
+        <div class="flow-card" style="border-left:3px solid #00ff88;">
+          <div class="fc-header">
+            <span class="fc-ticker">GOOGL</span>
+            <span class="fc-dir" style="color:#00ff88;">BULLISH</span>
+            <span class="fc-prem">$18.7M</span>
+            <span class="fc-score">Score: N/A</span>
+          </div>
+          <div class="fc-detail">Sweeps: 0 | $18.7M calls / $17.9M puts — MIXED. Scored 2.25/5.0 (below 3.0). Net premium ticks bearish.</div>
+          <div class="fc-action" style="color:#888;">No trade. Watch tomorrow.</div>
+        </div>
+        <div class="flow-card" style="border-left:3px solid #00ff88;">
+          <div class="fc-header">
+            <span class="fc-ticker">TSM</span>
+            <span class="fc-dir" style="color:#00ff88;">BULLISH</span>
+            <span class="fc-prem">$2.1M</span>
+            <span class="fc-score">Score: N/A</span>
+          </div>
+          <div class="fc-detail">Sweeps: 0 | $2.1M calls, 0 puts. Semiconductor — overlap with NVDA spread.</div>
+          <div class="fc-action" style="color:#888;">Monitor. Skip due to sector concentration.</div>
+        </div>
+        <div class="flow-card" style="border-left:3px solid #ff4444;">
+          <div class="fc-header">
+            <span class="fc-ticker">IWM</span>
+            <span class="fc-dir" style="color:#ff4444;">BEARISH</span>
+            <span class="fc-prem">$11.7M</span>
+            <span class="fc-score">Score: -4.0/5.0.</span>
+          </div>
+          <div class="fc-detail">Sweeps: 8 | STRONG_BEARISH score -4.0/5.0. $11.7M puts / $1.68M calls. 8 put sweeps, bias=-8. Net prem bearish (put_ask=4,379 vs cal</div>
+          <div class="fc-action" style="color:#888;">MARKET REGIME SIGNAL: supports DEFENSIVE posture. No IWM trade (excluded per CLAUDE.md — SPY/QQQ/IWM not allowed).</div>
+        </div>
+        <div class="flow-card" style="border-left:3px solid #ff4444;">
+          <div class="fc-header">
+            <span class="fc-ticker">SPY</span>
+            <span class="fc-dir" style="color:#ff4444;">BEARISH</span>
+            <span class="fc-prem">$12.5M</span>
+            <span class="fc-score">Score: -3.25/5.0.</span>
+          </div>
+          <div class="fc-detail">Sweeps: 14 | STRONG_BEARISH score -3.25/5.0. $12.5M puts / $1.7M calls. 14 put sweeps (bias=-12). Net prem neutral (tied). P/C=1.76. </div>
+          <div class="fc-action" style="color:#888;">Regime signal — no SPY trade this pulse (budget gate: 1 position open).</div>
+        </div>
+        <div class="flow-card" style="border-left:3px solid #ff4444;">
+          <div class="fc-header">
+            <span class="fc-ticker">NVDA</span>
+            <span class="fc-dir" style="color:#ff4444;">BEARISH</span>
+            <span class="fc-prem">$38.5M</span>
+            <span class="fc-score">Score: N/A</span>
+          </div>
+          <div class="fc-detail">Sweeps: 0 | FLOW_REVERSAL — BEARISH. $38.5M pure put premium from screener (22 contracts, sweep_vol=19,316 shares) + 5 dark pool pri</div>
+          <div class="fc-action" style="color:#888;">FIRST REVERSAL FLAG set. Exit if confirmed at tomorrow's daily monitor.</div>
+        </div>
+    </div>
+    <div>
+      <div style="background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:14px;">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:8px;">SECTOR FLOW HEATMAP</div>
+        <div id="sector-heatmap" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<hr class="section-divider">
+
+<!-- SECTION: DECISION LOG -->
+<div class="section">
+  <div class="section-title"><span class="st-icon">&#9998;</span> Decision Log -- What I Considered & Why</div>
+  <div style="max-height:500px;overflow-y:auto;">
+    
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">ADBE</span>
+            <span class="de-date">2026-03-31 20:10</span>
+            <span class="de-score">Score: 7.88</span>
+          </div>
+          <div class="de-reason">Adobe's creative cloud has 89% gross margins, 11% YoY revenue growth, 10.5% FCF yield. At P/E=13.6 vs 27 sector median, deeply undervalued. Strong competitive moat (GM std=0.3pp ov</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">UBER</span>
+            <span class="de-date">2026-03-31 20:10</span>
+            <span class="de-score">Score: 7.50</span>
+          </div>
+          <div class="de-reason">Uber platform generating 18.3% revenue growth with 6.6% FCF yield. P/E=14.7 vs 27 tech median — market underpricing profitable platform economics. D/E=0.50 conservative. Bullish fl</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #ff4444;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#ff4444;color:#0a0a1a;">CANCELLED</span>
+            <span class="de-ticker">UBER</span>
+            <span class="de-date">2026-04-01 04:10</span>
+            <span class="de-score">Score: 6.50</span>
+          </div>
+          <div class="de-reason">Reweight. Rescore dropped UBER from 7.50 → 6.50 (low margins GM=39.8%, OM=10.7%). Demoted from CONVICTION to BASE. Resubmitting at $108 (12%).</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">UBER</span>
+            <span class="de-date">2026-04-01 04:10</span>
+            <span class="de-score">Score: 6.50</span>
+          </div>
+          <div class="de-reason">Resubmitted at BASE weight (12%). Same thesis but right-sized for 6.50 score.</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">TFC</span>
+            <span class="de-date">2026-03-31 20:10</span>
+            <span class="de-score">Score: 7.50</span>
+          </div>
+          <div class="de-reason">Truist Financial growing revenue 25.5% YoY with 10% FCF yield and P/E=10.8 vs 14 sector median. Above 200 SMA confirms uptrend. Deep value in financials.</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">IBKR</span>
+            <span class="de-date">2026-03-31 20:10</span>
+            <span class="de-score">Score: 7.38</span>
+          </div>
+          <div class="de-reason">Interactive Brokers has 89.8% gross margins, 23.5% revenue growth, net cash balance sheet. Above 200 SMA. 1.5x FCF yield coverage. Initial build exception (score 7.38, below 7.5 th</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">DELL</span>
+            <span class="de-date">2026-03-31 20:10</span>
+            <span class="de-score">Score: 7.25</span>
+          </div>
+          <div class="de-reason">Dell Technologies benefits from AI server demand. Technology sector momentum (+12.8% relative strength vs SPY). Initial build exception (score 7.25).</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #ff4444;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#ff4444;color:#0a0a1a;">CANCELLED</span>
+            <span class="de-ticker">DELL</span>
+            <span class="de-date">2026-04-01 04:04</span>
+            <span class="de-score">Score: 5.50</span>
+          </div>
+          <div class="de-reason">Pre-fill cancellation. Rescore with correct API field parsing dropped DELL from 7.25 → 5.50 (UNDERWEIGHT). F5=0.0 (negative equity -$2.5B), F2=0.50 (GM=20.1%, OM=7.2%). Does not me</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">CRM</span>
+            <span class="de-date">2026-03-31 20:10</span>
+            <span class="de-score">Score: 7.12</span>
+          </div>
+          <div class="de-reason">Salesforce 77.6% gross margins, 8.4% FCF yield, revenue acceleration (+9.6% YoY). D/E=0.29. Tech sector tailwind. Initial build exception (score 7.12).</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #ff4444;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#ff4444;color:#0a0a1a;">CANCELLED</span>
+            <span class="de-ticker">CRM</span>
+            <span class="de-date">2026-04-01 04:10</span>
+            <span class="de-score">Score: 7.50</span>
+          </div>
+          <div class="de-reason">Reweight. Rescore upgraded CRM from 7.12 → 7.50 (STRONG BUY). Promoted to CONVICTION. Resubmitting at $126 (14%).</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">CRM</span>
+            <span class="de-date">2026-04-01 04:10</span>
+            <span class="de-score">Score: 7.50</span>
+          </div>
+          <div class="de-reason">Resubmitted at CONVICTION weight (14%). CRM now meets buy threshold — 77.7% GM, 21.5% OM expanding, 8.2% FCF yield, D/E=0.29, P/E=12.5 vs 27.5 sector.</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #00ff88;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#00ff88;color:#0a0a1a;">EXECUTED</span>
+            <span class="de-ticker">PYPL</span>
+            <span class="de-date">2026-03-31 20:10</span>
+            <span class="de-score">Score: 7.12</span>
+          </div>
+          <div class="de-reason">PayPal deep discount with 1.5x FCF yield, improving margins (18.3% operating), D/E=0.49. GM stability (0.8pp std over 8Q). Initial build exception (score 7.12).</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #ff4444;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#ff4444;color:#0a0a1a;">PENDING</span>
+            <span class="de-ticker">UBER</span>
+            <span class="de-date">Rebalance Apr 14</span>
+            <span class="de-score">HIGH</span>
+          </div>
+          <div class="de-reason"><strong>RE-SCORE & EVALUATE:</strong> Score 6.50 — below 7.5 buy threshold. Day 1 exception expires at first rebalance. If re-score < 7.5, EXIT.</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #ff4444;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#ff4444;color:#0a0a1a;">PENDING</span>
+            <span class="de-ticker">PYPL</span>
+            <span class="de-date">Rebalance Apr 14</span>
+            <span class="de-score">HIGH</span>
+          </div>
+          <div class="de-reason"><strong>RE-SCORE & EVALUATE:</strong> Score 6.50 — below 7.5 buy threshold. Day 1 exception expires at first rebalance. If re-score < 7.5, EXIT.</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #ffaa00;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#ffaa00;color:#0a0a1a;">PENDING</span>
+            <span class="de-ticker">IBKR</span>
+            <span class="de-date">Rebalance Apr 14</span>
+            <span class="de-score">MEDIUM</span>
+          </div>
+          <div class="de-reason"><strong>RE-SCORE & EVALUATE:</strong> Score 7.00 — below 7.5 buy threshold. Day 1 exception. If re-score < 7.5, consider exit.</div>
+        </div>
+        <div class="decision-entry" style="border-left:3px solid #ffaa00;">
+          <div class="de-header">
+            <span class="de-badge" style="background:#ffaa00;color:#0a0a1a;">PENDING</span>
+            <span class="de-ticker">TFC</span>
+            <span class="de-date">Rebalance Apr 14</span>
+            <span class="de-score">MEDIUM</span>
+          </div>
+          <div class="de-reason"><strong>REWEIGHT:</strong> Score 7.25 — mislabeled CONVICTION (requires >= 8.0). Reduce from 14.2% to BASE tier 6-10%.</div>
+        </div>
+  </div>
+</div>
+<hr class="section-divider">
+
+<!-- SECTION: OPTIONS STRATEGY -->
+<div class="section">
+  <div class="section-title"><span class="st-icon">&#9878;</span> Options Strategy -- Position Intelligence</div>
+  <div class="grid-2">
+    <div>
+      
+        <div class="opt-trade-card">
+          <div class="ot-header">
+            <span class="ot-type" style="background:#00ff88;color:#0a0a1a;">FC</span>
+            <span class="ot-ticker">NVDA</span>
+            <span class="ot-desc">Bull Call Spread: Long $182.50C / Short $185C, Apr 17 exp, $2.50 wide</span>
+          </div>
+          <div class="ot-stats">
+            <span>Cost: -$82.97 debit (filled $0.8297/sh)</span>
+            <span>Max Profit: $167.03 ($1.6703/sh)</span>
+            <span>Signal: 4.5/5.0</span>
+          </div>
+          <div class="ot-thesis">Strongest institutional flow signal: $42.6M call premium vs $9.9M put (4.3:1), 7 bullish sweeps, 0 bearish. Top calls: $3.8M Sept 2027 $205C sweep (v/oi=15.4), $2.4M May $180C at ask. IV 36th pctile =</div>
+        </div>
+      <div style="background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:14px;margin-top:10px;">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:8px;">EXIT TRIGGERS</div>
+        
+        <div class="trigger-row">
+          <span class="tr-name">---------</span>
+          <span class="tr-level">-------</span>
+          <span class="tr-status" style="color:#ff4444;">------------------------</span>
+        </div>
+        <div class="trigger-row">
+          <span class="tr-name">50% profit target</span>
+          <span class="tr-level">Spread value >= $1.66 ($166/contract)</span>
+          <span class="tr-status" style="color:#00ff88;">$0.71 ($71.00) — NOT HIT</span>
+        </div>
+        <div class="trigger-row">
+          <span class="tr-name">50% stop loss</span>
+          <span class="tr-level">Spread value <= $0.415 ($41.50/contract)</span>
+          <span class="tr-status" style="color:#00ff88;">$0.71 ($71.00) — SAFE (71% above stop)</span>
+        </div>
+        <div class="trigger-row">
+          <span class="tr-name">Time stop</span>
+          <span class="tr-level">< 25% profit by Apr 14 (3 days before exp)</span>
+          <span class="tr-status" style="color:#ff4444;">15 DTE tomorrow — safe</span>
+        </div>
+        <div class="trigger-row">
+          <span class="tr-name">Flow reversal</span>
+          <span class="tr-level">NVDA flow flips bearish (2nd occurrence)</span>
+          <span class="tr-status" style="color:#ff4444;">NOT TRIGGERED — FLOW_WATCH active, full-day flow remains bullish (5.18:1 calls).</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:14px;">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:8px;">OPTIONS BUDGET (30% = $300)</div>
+        <div class="chart-container">
+          <canvas id="budgetChart"></canvas>
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);text-align:center;margin-top:6px;">1/3 concurrent positions used</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:14px;margin-top:10px;">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:8px;">NVDA SPREAD VALUE TREND</div>
+        <div class="spread-chart-container">
+          <canvas id="spreadChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<hr class="section-divider">
+
+<!-- SECTION: REGIME & MACRO -->
+<div class="section">
+  <div class="section-title"><span class="st-icon">&#9728;</span> Regime & Macro -- Why I'm Positioned This Way</div>
+  <div class="grid-2">
+    <div class="regime-card">
+      <div class="regime-row">
+        <span class="rr-label">Posture</span>
+        <span class="rr-value" style="color:#ffaa00;">WATCH</span>
+      </div>
+      <div class="regime-row">
+        <span class="rr-label">SPY vs 200 SMA</span>
+        <span class="rr-value">BELOW (marginal)</span>
+      </div>
+      <div class="regime-row">
+        <span class="rr-label">SPY Price / 200 SMA</span>
+        <span class="rr-value">$655.985 / $656.4245</span>
+      </div>
+      <div class="regime-row">
+        <span class="rr-label">Death Cross</span>
+        <span class="rr-value" style="color:#00ff88;">NO</span>
+      </div>
+      <div class="regime-row">
+        <span class="rr-label">VIX</span>
+        <span class="rr-value">ELEVATED — VIXY proxy ~$34 range (below amended 40 threshold)</span>
+      </div>
+      <div class="regime-row">
+        <span class="rr-label">Cash Target</span>
+        <span class="rr-value">5%</span>
+      </div>
+      <div class="regime-row">
+        <span class="rr-label">Buy Rules</span>
+        <span class="rr-value" style="font-size:10px;">New buys allowed at score >= 8.0 (full size), 7.5-7.9 at 75% weight</span>
+      </div>
+    </div>
+    <div>
+      <div class="regime-card" style="margin-bottom:10px;">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:6px;">REGIME REASONING</div>
+        <div style="font-size:12px;color:var(--text);">SPY $655.985 (close) vs 200 SMA $656.4245 (-0.07%). Near-flat, essentially at the 200 SMA. Regime remains WATCH (0-5% below 200 SMA — no DEFENSIVE trigger).</div>
+      </div>
+      <div class="regime-card" style="margin-bottom:10px;">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:6px;">SPY FLOW SENTIMENT</div>
+        <div style="font-size:12px;color:var(--accent-yellow);">BEARISH (-22,117 net). SPY flow alerts: $14.19M puts / $5.93M calls. Overnight bias: CAUTIOUSLY BEARISH — institutional put hedging continues. Not a regime trigger.</div>
+      </div>
+      <div class="regime-card">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:6px;">OVERNIGHT CONCERNS</div>
+        
+        <div class="overnight-concern">
+          <span class="oc-title">SPY overnight bias: BEARISH.</span>
+          <span class="oc-detail">Net premium ticks -22,117 (last 5 ticks). Put flow $14.19M vs call $5.93M. Broad institutional hedging into close persists. Watch for gap-down opening tomorrow.</span>
+        </div>
+        <div class="overnight-concern">
+          <span class="oc-title">NVDA spread fragility.</span>
+          <span class="oc-detail">Spread closed at $0.73 (-12% from fill). NVDA needs to recover toward $182.50 strike for position to work. If NVDA gaps down >3% tomorrow, re-score immediately. Stop at $0.415 ($41.50 net value).</span>
+        </div>
+        <div class="overnight-concern">
+          <span class="oc-title">NVDA FLOW_WATCH (downgraded from FLOW_REVERSAL).</span>
+          <span class="oc-detail">Full-day data confirmed 5.18:1 call-to-put. EOD put spike was broad market hedging. Tomorrow's 1 PM daily monitor must re-check NVDA flow. If full-day puts exceed calls = second reversal = EXIT per Ru</span>
+        </div>
+        <div class="overnight-concern">
+          <span class="oc-title">Portfolio underperforming SPY.</span>
+          <span class="oc-detail">Day 1 close: -1.98% alpha. Tech drag (ADBE -0.20%, CRM -0.39%) plus options position down 12%.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<hr class="section-divider">
+
+<!-- SECTION: LESSONS & ERRORS -->
+<div class="section">
+  <div class="section-title"><span class="st-icon">&#9888;</span> Lessons & Errors -- Self-Improvement Log</div>
+  <div class="grid-2">
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-bottom:8px;">MISTAKES</div>
+      
+        <div class="mistake-entry">
+          <div class="mi-header">
+            <span class="mi-date">2026-04-01</span>
+            <span class="mi-status" style="color:#00ff88;">FIXED</span>
+          </div>
+          <div class="mi-what">Initial scoring run used wrong field names (`revenue` instead of `total_revenue`, `operating_cash_flow` instead of `operating_cashflow`, etc.). All 7 stocks scored 0 on F1-F4 in the broken run, but th</div>
+          <div class="mi-fix"><strong>Fix:</strong> (1) Fixed field mapping in scoring script. (2) Documented correct field names in memory. (3) Added to Lessons_Learned.md. (4) Future: add data integrity check — if ≥4 of 8 factors score 0, flag `DATA_</div>
+        </div>
+        <div class="mistake-entry">
+          <div class="mi-header">
+            <span class="mi-date">2026-04-01</span>
+            <span class="mi-status" style="color:#00ff88;">PARTIALLY FIXED — disk cleaned, new cleanup rule documented. Full fix requires confirming midday-monitor can execute.</span>
+          </div>
+          <div class="mi-what">The late-morning-flow scheduled task (11:30 AM ET) could not execute ANY Python/bash commands. The sandbox filesystem at `/sessions/.../tmp/` ran out of space (ENOSPC error). This blocked: (1) fresh N</div>
+          <div class="mi-fix"><strong>Fix:</strong> (1) Truncated all old screening JSONs and one-time scoring scripts. (2) Added to Lessons_Learned.md Pattern Tracker. (3) **NEW RULE: Every session's final task must truncate api_log.json to last 50 en</div>
+        </div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-bottom:8px;">PATTERNS & LESSONS</div>
+      
+        <div class="lesson-pattern">
+          <span class="lp-name">---------</span>
+          <span class="lp-count">-------------</span>
+          <span class="lp-action">-------------</span>
+        </div>
+        <div class="lesson-pattern">
+          <span class="lp-name">API field name mismatch causing bad scores</span>
+          <span class="lp-count">1 (DELL)</span>
+          <span class="lp-action">Fixed field mapping, added to memory</span>
+        </div>
+        <div class="lesson-pattern">
+          <span class="lp-name">Position sized before score validated</span>
+          <span class="lp-count">1 (UBER)</span>
+          <span class="lp-action">Rescore before sizing on all future builds</span>
+        </div>
+        <div class="lesson-pattern">
+          <span class="lp-name">F6 data sparse across all stocks</span>
+          <span class="lp-count">Systematic</span>
+          <span class="lp-action">Known UW API limitation — documented</span>
+        </div>
+        <div class="lesson-pattern">
+          <span class="lp-name">PEG ratio unavailable</span>
+          <span class="lp-count">Systematic</span>
+          <span class="lp-action">yfinance returns N/A — find alternative source</span>
+        </div>
+        <div class="lesson-pattern">
+          <span class="lp-name">Sandbox disk full blocks all execution</span>
+          <span class="lp-count">1 (late-morning-flow 4/1)</span>
+          <span class="lp-action">Truncated old JSON files. Need proactive cleanup after each major session.</span>
+        </div>
+        <div class="lesson-entry">
+          <span class="le-ticker">DELL</span>
+          <span class="le-text">**ALWAYS validate API field names against raw response data before trusting any score.** A scoring run where F1-F4 all equal zero should trigger an automatic data integrity alarm — real companies don'</span>
+        </div>
+        <div class="lesson-entry">
+          <span class="le-ticker">UBER</span>
+          <span class="le-text">**Position sizing must follow scores, not precede them.** In the initial build, weights were assigned before the scoring pipeline was validated. UBER got CONVICTION weight based on a score that later </span>
+        </div>
+        <div class="lesson-entry">
+          <span class="le-ticker">CRM</span>
+          <span class="le-text">**Rescoring can upgrade, not just downgrade.** The instinct is to rescore as a risk check, but it also reveals hidden value. CRM was underweighted relative to its true quality.</span>
+        </div>
+    </div>
+  </div>
+</div>
+<hr class="section-divider">
+
+<!-- SECTION: WATCHLIST -->
+<div class="section">
+  <div class="section-title"><span class="st-icon">&#128269;</span> Watchlist -- What I'm Tracking</div>
+  <div class="grid-3">
+    
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">QCOM</span>
+            <span class="we-score" style="color:#ffaa00;">6.88</span>
+            <span class="we-sector">Technology</span>
+          </div>
+          <div class="we-strengths">FCF yield 9.4%, 10.3% rev growth, tech tilt</div>
+          <div class="we-blocker" style="color:#ff6644;">Below 7.5 buy threshold</div>
+          <div class="we-next" style="color:#888;">Re-score at weekly review</div>
+        </div>
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">NEM</span>
+            <span class="we-score" style="color:#ffaa00;">6.75</span>
+            <span class="we-sector">Basic Materials</span>
+          </div>
+          <div class="we-strengths">24.3% rev growth, net cash, above 200 SMA</div>
+          <div class="we-blocker" style="color:#ff6644;">Below 7.5, no sector tilt</div>
+          <div class="we-next" style="color:#888;">Monitor gold prices</div>
+        </div>
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">NU</span>
+            <span class="we-score" style="color:#ffaa00;">6.75</span>
+            <span class="we-sector">Financial Services</span>
+          </div>
+          <div class="we-strengths">37% rev growth (accelerating), 1.5x FCF yield</div>
+          <div class="we-blocker" style="color:#ff6644;">High D/E=3.34, no sector tilt</div>
+          <div class="we-next" style="color:#888;">Re-score; D/E improving?</div>
+        </div>
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">ANET</span>
+            <span class="we-score" style="color:#ffaa00;">6.38</span>
+            <span class="we-sector">Technology</span>
+          </div>
+          <div class="we-strengths">28.6% rev growth, net cash, GM std=0.8pp</div>
+          <div class="we-blocker" style="color:#ff6644;">Low FCF yield (2.8%), high P/E</div>
+          <div class="we-next" style="color:#888;">Needs valuation compress</div>
+        </div>
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">USB</span>
+            <span class="we-score" style="color:#ffaa00;">6.25</span>
+            <span class="we-sector">Financial Services</span>
+          </div>
+          <div class="we-strengths">9.9% FCF yield, above 200 SMA</div>
+          <div class="we-blocker" style="color:#ff6644;">Low revenue growth (0.3%)</div>
+          <div class="we-next" style="color:#888;">Needs revenue acceleration</div>
+        </div>
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">CMCSA</span>
+            <span class="we-score" style="color:#ffaa00;">6.25</span>
+            <span class="we-sector">Communication Services</span>
+          </div>
+          <div class="we-strengths">21.2% FCF yield!, P/E=5.2</div>
+          <div class="we-blocker" style="color:#ff6644;">Flat revenue, no sector tilt</div>
+          <div class="we-next" style="color:#888;">Deep value candidate</div>
+        </div>
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">MRVL</span>
+            <span class="we-score" style="color:#ffaa00;">6.25</span>
+            <span class="we-sector">Technology</span>
+          </div>
+          <div class="we-strengths">42.1% rev growth (accelerating!), tech tilt</div>
+          <div class="we-blocker" style="color:#ff6644;">Low FCF yield (1.6%), GM volatile</div>
+          <div class="we-next" style="color:#888;">High-growth speculative</div>
+        </div>
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">SU</span>
+            <span class="we-score" style="color:#ffaa00;">6.25</span>
+            <span class="we-sector">Energy</span>
+          </div>
+          <div class="we-strengths">8.8% FCF yield, energy tilt, above 200 SMA</div>
+          <div class="we-blocker" style="color:#ff6644;">Negative rev growth, sector risk</div>
+          <div class="we-next" style="color:#888;">Energy sector call</div>
+        </div>
+        <div class="watch-entry">
+          <div class="we-header">
+            <span class="we-ticker">FTNT</span>
+            <span class="we-score" style="color:#ffaa00;">6.25</span>
+            <span class="we-sector">Technology</span>
+          </div>
+          <div class="we-strengths">80.8% gross margins, net cash, GM stable</div>
+          <div class="we-blocker" style="color:#ff6644;">Low FCF yield, high P/E</div>
+          <div class="we-next" style="color:#888;">Needs post-earnings pop</div>
+        </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:20px;font-family:var(--mono);font-size:10px;color:#333;">
+  Generated 2026-04-01 12:58 | Agent Brain v2.0 | Data from Claude's autonomous decision engine
+</div>
+
+<script>
+// === RADAR CHARTS ===
+const scoresData = [{"ticker": "ADBE", "total": 7.5, "factors": [1.25, 1.5, 1.5, 0.75, 0.5, 0.75, 0.75, 0.5]}, {"ticker": "CRM", "total": 7.5, "factors": [0.75, 1.5, 1.5, 0.75, 1.0, 0.75, 0.75, 0.5]}, {"ticker": "TFC", "total": 7.25, "factors": [1.75, 1.5, 1.5, 0.75, 0.25, 0.75, 0.5, 0.25]}, {"ticker": "IBKR", "total": 7.0, "factors": [1.5, 1.5, 1.5, 0.0, 1.0, 0.75, 0.25, 0.5]}, {"ticker": "UBER", "total": 6.5, "factors": [1.0, 0.75, 1.0, 0.75, 1.0, 0.75, 0.75, 0.5]}, {"ticker": "PYPL", "total": 6.5, "factors": [0.25, 1.25, 1.5, 0.75, 1.0, 0.75, 0.75, 0.25]}, {"ticker": "DELL", "total": 5.5, "factors": [1.25, 0.5, 1.0, 0.75, 0.0, 0.75, 0.75, 0.5]}];
+const factorLabels = ["F1:Rev", "F2:Profit", "F3:FCF", "F4:Value", "F5:Balance", "F6:Momentum", "F7:Compete", "F8:Flow"];
+const factorMaxes = [1.75, 1.5, 1.5, 1.5, 1.0, 1.5, 1.0, 0.5];
+
+scoresData.forEach((s, idx) => {
+  const canvas = document.getElementById('radar-' + idx);
+  if (!canvas) return;
+  const normalized = s.factors.map((f, i) => (f / factorMaxes[i]) * 100);
+  new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: factorLabels,
+      datasets: [{
+        data: normalized,
+        backgroundColor: 'rgba(0, 255, 136, 0.15)',
+        borderColor: '#00ff88',
+        borderWidth: 2,
+        pointBackgroundColor: '#00ff88',
+        pointBorderColor: '#00ff88',
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { display: false },
+          grid: { color: '#2a2a4e' },
+          angleLines: { color: '#2a2a4e' },
+          pointLabels: {
+            color: '#888',
+            font: { size: 9, family: "'SF Mono', monospace" }
+          }
+        }
+      }
+    }
+  });
+});
+
+// === BUDGET DONUT ===
+const budgetData = [{"label": "NVDA Spread", "value": 82.97, "color": "#00ff88"}, {"label": "Available", "value": 217.03, "color": "#333"}];
+const budgetCtx = document.getElementById('budgetChart');
+if (budgetCtx) {
+  new Chart(budgetCtx, {
+    type: 'doughnut',
+    data: {
+      labels: budgetData.map(d => d.label),
+      datasets: [{
+        data: budgetData.map(d => d.value),
+        backgroundColor: budgetData.map(d => d.color),
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#888', font: { size: 10, family: "'SF Mono', monospace" } }
+        }
+      }
+    }
+  });
+}
+
+// === SPREAD TREND LINE ===
+const spreadData = [0.83, 0.81, 0.79, 0.76, 0.73, 0.7, 0.66, 0.685, 0.69, 0.735, 0.73, 0.71];
+const spreadCtx = document.getElementById('spreadChart');
+if (spreadCtx && spreadData.length > 0) {
+  const labels = spreadData.map((_, i) => i === 0 ? 'Fill' : '');
+  new Chart(spreadCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          data: spreadData,
+          borderColor: '#00ff88',
+          backgroundColor: 'rgba(0,255,136,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2,
+          borderWidth: 2,
+        },
+        {
+          label: 'Stop ($0.415)',
+          data: spreadData.map(() => 0.415),
+          borderColor: '#ff4444',
+          borderDash: [5, 5],
+          borderWidth: 1,
+          pointRadius: 0,
+          fill: false,
+        },
+        {
+          label: 'Target ($1.66)',
+          data: spreadData.map(() => 1.66),
+          borderColor: '#00ff88',
+          borderDash: [5, 5],
+          borderWidth: 1,
+          pointRadius: 0,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { color: '#888', font: { size: 9 }, boxWidth: 12 }
+        }
+      },
+      scales: {
+        x: { display: false },
+        y: {
+          min: 0,
+          max: 2.0,
+          grid: { color: '#1a1a2e' },
+          ticks: { color: '#888', font: { size: 9 } }
+        }
+      }
+    }
+  });
+}
+
+// === SECTOR HEATMAP ===
+const sectorFlow = [
+  { name: 'Technology', flow: 'BULLISH', detail: 'NVDA $42.6M calls, ADBE $12.2M calls' },
+  { name: 'Financials', flow: 'NEUTRAL', detail: 'TFC/IBKR insufficient flow data' },
+  { name: 'Industrials', flow: 'BULLISH', detail: 'UBER $4.2M calls vs $610K puts' },
+  { name: 'Consumer', flow: 'NEUTRAL', detail: 'No significant flow signals' },
+  { name: 'Semis', flow: 'BULLISH', detail: 'NVDA dominant, TSM $2.1M calls' },
+  { name: 'Small Cap', flow: 'BEARISH', detail: 'IWM $11.7M puts, 8 sweeps' },
+  { name: 'Broad Mkt', flow: 'BEARISH', detail: 'SPY $12.5M puts, 14 sweeps' },
+  { name: 'Metals', flow: 'BULLISH', detail: 'SLV $6.7M calls, 4 sweeps' },
+];
+const heatmapEl = document.getElementById('sector-heatmap');
+if (heatmapEl) {
+  sectorFlow.forEach(s => {
+    const colors = { BULLISH: '#00ff8822', BEARISH: '#ff444422', NEUTRAL: '#33333366', MIXED: '#ffaa0022' };
+    const textColors = { BULLISH: '#00ff88', BEARISH: '#ff4444', NEUTRAL: '#888', MIXED: '#ffaa00' };
+    const div = document.createElement('div');
+    div.style.cssText = `background:${colors[s.flow]};border-radius:6px;padding:8px;`;
+    div.innerHTML = `<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:${textColors[s.flow]};">${s.name}</div><div style="font-size:10px;color:#888;margin-top:2px;">${s.flow}</div><div style="font-size:9px;color:#666;margin-top:2px;">${s.detail}</div>`;
+    heatmapEl.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>
